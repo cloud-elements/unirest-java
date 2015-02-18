@@ -26,6 +26,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package com.mashape.unirest.request;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -62,12 +63,12 @@ public class HttpRequestWithBody extends HttpRequest {
 		super.basicAuth(username, password);
 		return this;
 	}
-	
+
 	@Override
 	public HttpRequestWithBody queryString(Map<String, Object> parameters) {
 		return (HttpRequestWithBody) super.queryString(parameters);
 	}
-	
+
 	@Override
 	public HttpRequestWithBody queryString(String name, Object value) {
 		return (HttpRequestWithBody) super.queryString(name, value);
@@ -78,7 +79,7 @@ public class HttpRequestWithBody extends HttpRequest {
 		this.body = body;
 		return body;
 	}
-	
+
 	public MultipartBody field(String name, Object value) {
 		MultipartBody body = new MultipartBody(this).field(name, (value == null) ? "" : value.toString());
 		this.body = body;
@@ -99,6 +100,18 @@ public class HttpRequestWithBody extends HttpRequest {
 
 	public MultipartBody field(String name, File file, String contentType) {
 		MultipartBody body = new MultipartBody(this).field(name, file, contentType);
+		this.body = body;
+		return body;
+	}
+
+	public MultipartBody field(String name, InputStream file, String fileName) {
+		MultipartBody body = new MultipartBody(this).field(name, file, fileName);
+		this.body = body;
+		return body;
+	}
+
+	public MultipartBody field(String name, InputStream file, String fileName, String contentType) {
+		MultipartBody body = new MultipartBody(this).field(name, file, fileName, contentType);
 		this.body = body;
 		return body;
 	}

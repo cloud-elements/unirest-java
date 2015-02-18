@@ -32,7 +32,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
@@ -63,13 +66,13 @@ public class UnirestTest {
 
 	private CountDownLatch lock;
 	private boolean status;
-	
+
 	@Before
 	public void setUp() {
 		lock = new CountDownLatch(1);
 		status = false;
 	}
-	
+
 	private String findAvailableIpAddress() throws UnknownHostException, IOException {
 		for(int i = 100;i<=255;i++) {
 			String ip = "192.168.1." + i;
@@ -77,10 +80,10 @@ public class UnirestTest {
 				return ip;
 			}
 		}
-		
+
 		throw new RuntimeException("Couldn't find an available IP address in the range of 192.168.0.100-255");
 	}
-	
+
 	@Test
 	public void testRequests() throws JSONException, UnirestException {
 		HttpResponse<JsonNode> jsonResponse = Unirest.post("http://httpbin.org/post")
@@ -88,12 +91,12 @@ public class UnirestTest {
 													 .field("param1", "value1")
 													 .field("param2","bye")
 													 .asJson();
-		
+
 		assertTrue(jsonResponse.getHeaders().size() > 0);
 		assertTrue(jsonResponse.getBody().toString().length() > 0);
 		assertFalse(jsonResponse.getRawBody() == null);
 		assertEquals(200, jsonResponse.getStatus());
-		
+
 		JsonNode json = jsonResponse.getBody();
 		assertFalse(json.isArray());
 		assertNotNull(json.getObject());
@@ -101,38 +104,38 @@ public class UnirestTest {
 		assertEquals(1, json.getArray().length());
 		assertNotNull(json.getArray().get(0));
 	}
-	
+
 	@Test
-	public void testGet() throws JSONException, UnirestException { 
+	public void testGet() throws JSONException, UnirestException {
 		HttpResponse<JsonNode> response = Unirest.get("http://httpbin.org/get?name=mark").asJson();
 		assertEquals(response.getBody().getObject().getJSONObject("args").getString("name"), "mark");
-		
+
 		response = Unirest.get("http://httpbin.org/get").queryString("name", "mark2").asJson();
 		assertEquals(response.getBody().getObject().getJSONObject("args").getString("name"), "mark2");
 	}
-	
+
 	@Test
 	public void testGetUTF8() throws UnirestException {
 		HttpResponse<JsonNode> response = Unirest.get("http://httpbin.org/get")
 		.queryString("param3","こんにちは").asJson();
-		
+
 		assertEquals(response.getBody().getObject().getJSONObject("args").getString("param3"), "こんにちは");
 	}
-	
+
 	@Test
 	public void testPostUTF8() throws UnirestException {
 		HttpResponse<JsonNode> response = Unirest.post("http://httpbin.org/post")
 		.field("param3","こんにちは").asJson();
-		
+
 		assertEquals(response.getBody().getObject().getJSONObject("form").getString("param3"), "こんにちは");
 	}
-	
+
 	@Test
 	public void testPostBinaryUTF8() throws UnirestException, URISyntaxException {
 		HttpResponse<JsonNode> response = Unirest.post("http://httpbin.org/post")
 		.field("param3","こんにちは")
 		.field("file", new File(getClass().getResource("/test").toURI())).asJson();
-		
+
 		assertEquals("This is a test file", response.getBody().getObject().getJSONObject("files").getString("file"));
 		assertEquals("こんにちは", response.getBody().getObject().getJSONObject("form").getString("param3"));
 	}
@@ -150,48 +153,48 @@ public class UnirestTest {
     }
 
 	@Test
-	public void testCustomUserAgent() throws JSONException, UnirestException { 
+	public void testCustomUserAgent() throws JSONException, UnirestException {
 		HttpResponse<JsonNode> response = Unirest.get("http://httpbin.org/get?name=mark").header("user-agent", "hello-world").asJson();
 		assertEquals("hello-world", response.getBody().getObject().getJSONObject("headers").getString("User-Agent"));
-		
-		
+
+
 		GetRequest getRequest = Unirest.get("http");
 		for(Object current : Arrays.asList(0, 1, 2)) {
 			getRequest.queryString("name", current);
 		}
-		
+
 	}
-	
+
 	@Test
-	public void testGetMultiple() throws JSONException, UnirestException { 
+	public void testGetMultiple() throws JSONException, UnirestException {
 		for(int i=1;i<=20;i++) {
 			HttpResponse<JsonNode> response = Unirest.get("http://httpbin.org/get?try=" + i).asJson();
 			assertEquals(response.getBody().getObject().getJSONObject("args").getString("try"), ((Integer)i).toString());
 		}
 	}
-	
+
 	@Test
-	public void testGetFields() throws JSONException, UnirestException { 
+	public void testGetFields() throws JSONException, UnirestException {
 		HttpResponse<JsonNode> response = Unirest.get("http://httpbin.org/get").queryString("name", "mark").queryString("nick", "thefosk").asJson();
 		assertEquals(response.getBody().getObject().getJSONObject("args").getString("name"), "mark");
 		assertEquals(response.getBody().getObject().getJSONObject("args").getString("nick"), "thefosk");
 	}
-	
+
 	@Test
-	public void testGetFields2() throws JSONException, UnirestException { 
+	public void testGetFields2() throws JSONException, UnirestException {
 		HttpResponse<JsonNode> response = Unirest.get("http://httpbin.org/get").queryString("email", "hello@hello.com").asJson();
 		assertEquals("hello@hello.com", response.getBody().getObject().getJSONObject("args").getString("email"));
 	}
-	
+
 	@Test
-	public void testDelete() throws JSONException, UnirestException { 
+	public void testDelete() throws JSONException, UnirestException {
 		HttpResponse<JsonNode> response = Unirest.delete("http://httpbin.org/delete").asJson();
 		assertEquals(200, response.getStatus());
-	
+
 		response = Unirest.delete("http://httpbin.org/delete").field("name", "mark").asJson();
 		assertEquals("mark", response.getBody().getObject().getJSONObject("form").getString("name"));
 	}
-	
+
 	@Test
 	public void testDeleteBody() throws JSONException, UnirestException {
 		String body = "{\"jsonString\":{\"members\":\"members1\"}}";
@@ -199,13 +202,13 @@ public class UnirestTest {
 		assertEquals(200, response.getStatus());
 		assertEquals(body, response.getBody().getObject().getString("data"));
 	}
-	
+
 	@Test
-	public void testBasicAuth() throws JSONException, UnirestException { 
+	public void testBasicAuth() throws JSONException, UnirestException {
 		HttpResponse<JsonNode> response = Unirest.get("http://httpbin.org/headers").basicAuth("user", "test").asJson();
 		assertEquals( "Basic dXNlcjp0ZXN0", response.getBody().getObject().getJSONObject("headers").getString("Authorization"));
 	}
-	
+
 	@Test
 	public void testAsync() throws JSONException, InterruptedException, ExecutionException {
 		Future<HttpResponse<JsonNode>> future = Unirest.post("http://httpbin.org/post")
@@ -213,15 +216,15 @@ public class UnirestTest {
 				 .field("param1", "value1")
 				 .field("param2","bye")
 				 .asJsonAsync();
-		
+
 		assertNotNull(future);
 		HttpResponse<JsonNode> jsonResponse = future.get();
-		
+
 		assertTrue(jsonResponse.getHeaders().size() > 0);
 		assertTrue(jsonResponse.getBody().toString().length() > 0);
 		assertFalse(jsonResponse.getRawBody() == null);
 		assertEquals(200, jsonResponse.getStatus());
-		
+
 		JsonNode json = jsonResponse.getBody();
 		assertFalse(json.isArray());
 		assertNotNull(json.getObject());
@@ -229,7 +232,7 @@ public class UnirestTest {
 		assertEquals(1, json.getArray().length());
 		assertNotNull(json.getArray().get(0));
 	}
-	
+
 	@Test
 	public void testAsyncCallback() throws JSONException, InterruptedException, ExecutionException {
 		Unirest.post("http://httpbin.org/post")
@@ -237,40 +240,40 @@ public class UnirestTest {
 		 .field("param1", "value1")
 		 .field("param2","bye")
 		 .asJsonAsync(new Callback<JsonNode>() {
-			
+
 			public void failed(UnirestException e) {
 				fail();
 			}
-			
+
 			public void completed(HttpResponse<JsonNode> jsonResponse) {
 				assertTrue(jsonResponse.getHeaders().size() > 0);
 				assertTrue(jsonResponse.getBody().toString().length() > 0);
 				assertFalse(jsonResponse.getRawBody() == null);
 				assertEquals(200, jsonResponse.getStatus());
-				
+
 				JsonNode json = jsonResponse.getBody();
 				assertFalse(json.isArray());
 				assertNotNull(json.getObject());
 				assertNotNull(json.getArray());
 				assertEquals(1, json.getArray().length());
 				assertNotNull(json.getArray().get(0));
-				
+
 				assertEquals("value1", json.getObject().getJSONObject("form").getString("param1"));
 				assertEquals("bye", json.getObject().getJSONObject("form").getString("param2"));
-				
+
 				status = true;
 				lock.countDown();
 			}
-			
+
 			public void cancelled() {
 				fail();
 			}
 		});
-		
+
 		lock.await(10, TimeUnit.SECONDS);
 		assertTrue(status);
 	}
-	
+
 	@Test
 	public void testMultipart() throws JSONException, InterruptedException, ExecutionException, URISyntaxException, UnirestException {
 		HttpResponse<JsonNode> jsonResponse =
@@ -281,7 +284,7 @@ public class UnirestTest {
 		assertTrue(jsonResponse.getBody().toString().length() > 0);
 		assertFalse(jsonResponse.getRawBody() == null);
 		assertEquals(200, jsonResponse.getStatus());
-		
+
 		JsonNode json = jsonResponse.getBody();
 		assertFalse(json.isArray());
 		assertNotNull(json.getObject());
@@ -289,18 +292,22 @@ public class UnirestTest {
 		assertEquals(1, json.getArray().length());
 		assertNotNull(json.getArray().get(0));
 		assertNotNull(json.getObject().getJSONObject("files"));
-		
+
 		assertEquals("This is a test file", json.getObject().getJSONObject("files").getString("file"));
 		assertEquals("Mark", json.getObject().getJSONObject("form").getString("name"));
 	}
-	
+
 	@Test
 	public void testMultipartContentType() throws JSONException, InterruptedException, ExecutionException,
-		URISyntaxException, UnirestException {
+		URISyntaxException, UnirestException, FileNotFoundException {
+		File file = new File(getClass().getResource("/image.png").toURI());
+		InputStream fis = new FileInputStream(file);
+
 		HttpResponse<JsonNode> jsonResponse =
 			Unirest.post("http://httpbin.org/post")
 				.field("name", "Mark")
-				.field("file", new File(getClass().getResource("/image.jpg").toURI()), "image/jpeg").asJson();
+				.field("file", new File(getClass().getResource("/image.jpg").toURI()), "image/jpeg")
+				.field("file2", fis,	"my-filename.png", "image/png").asJson();
 		assertTrue(jsonResponse.getHeaders().size() > 0);
 		assertTrue(jsonResponse.getBody().toString().length() > 0);
 		assertFalse(jsonResponse.getRawBody() == null);
@@ -315,6 +322,7 @@ public class UnirestTest {
 		assertNotNull(json.getObject().getJSONObject("files"));
 
 		assertTrue(json.getObject().getJSONObject("files").getString("file").contains("data:image/jpeg"));
+		assertTrue(json.getObject().getJSONObject("files").getString("file2").contains("data:image/png"));
 		assertEquals("Mark", json.getObject().getJSONObject("form").getString("name"));
 	}
 
@@ -323,41 +331,41 @@ public class UnirestTest {
 		Unirest.post("http://httpbin.org/post")
 		.field("name", "Mark")
 		.field("file", new File(getClass().getResource("/test").toURI())).asJsonAsync(new Callback<JsonNode>() {
-			
+
 			public void failed(UnirestException e) {
 				fail();
 			}
-			
+
 			public void completed(HttpResponse<JsonNode> response) {
 				assertTrue(response.getHeaders().size() > 0);
 				assertTrue(response.getBody().toString().length() > 0);
 				assertFalse(response.getRawBody() == null);
 				assertEquals(200, response.getStatus());
-				
+
 				JsonNode json = response.getBody();
 				assertFalse(json.isArray());
 				assertNotNull(json.getObject());
 				assertNotNull(json.getArray());
 				assertEquals(1, json.getArray().length());
 				assertNotNull(json.getArray().get(0));
-				
+
 				assertEquals("This is a test file", json.getObject().getJSONObject("files").getString("file"));
 				assertEquals("Mark", json.getObject().getJSONObject("form").getString("name"));
-				
+
 				status = true;
 				lock.countDown();
 			}
-			
+
 			public void cancelled() {
 				fail();
 			}
-			
+
 		});
-		
+
 		lock.await(10, TimeUnit.SECONDS);
 		assertTrue(status);
 	}
-	
+
 	@Test
 	public void testGzip() throws UnirestException, JSONException {
 		HttpResponse<JsonNode> jsonResponse =
@@ -366,12 +374,12 @@ public class UnirestTest {
 		assertTrue(jsonResponse.getBody().toString().length() > 0);
 		assertFalse(jsonResponse.getRawBody() == null);
 		assertEquals(200, jsonResponse.getStatus());
-		
+
 		JsonNode json = jsonResponse.getBody();
 		assertFalse(json.isArray());
 		assertTrue(json.getObject().getBoolean("gzipped"));
 	}
-	
+
 	@Test
 	public void testGzipAsync() throws UnirestException, JSONException, InterruptedException, ExecutionException {
 		HttpResponse<JsonNode> jsonResponse =
@@ -380,12 +388,12 @@ public class UnirestTest {
 		assertTrue(jsonResponse.getBody().toString().length() > 0);
 		assertFalse(jsonResponse.getRawBody() == null);
 		assertEquals(200, jsonResponse.getStatus());
-		
+
 		JsonNode json = jsonResponse.getBody();
 		assertFalse(json.isArray());
 		assertTrue(json.getObject().getBoolean("gzipped"));
 	}
-	
+
 	@Test
 	public void testDefaultHeaders() throws UnirestException, JSONException {
 		Unirest.setDefaultHeader("X-Custom-Header", "hello");
@@ -397,7 +405,7 @@ public class UnirestTest {
 		assertTrue(jsonResponse.getBody().toString().length() > 0);
 		assertFalse(jsonResponse.getRawBody() == null);
 		assertEquals(200, jsonResponse.getStatus());
-		
+
 		JsonNode json = jsonResponse.getBody();
 		assertFalse(json.isArray());
 		assertTrue(jsonResponse.getBody().getObject().getJSONObject("headers").has("X-Custom-Header"));
@@ -408,13 +416,13 @@ public class UnirestTest {
 		jsonResponse = Unirest.get("http://httpbin.org/headers").asJson();
 		assertTrue(jsonResponse.getBody().getObject().getJSONObject("headers").has("X-Custom-Header"));
 		assertEquals("hello", jsonResponse.getBody().getObject().getJSONObject("headers").getString("X-Custom-Header"));
-		
+
 		Unirest.clearDefaultHeaders();
-		
+
 		jsonResponse = Unirest.get("http://httpbin.org/headers").asJson();
 		assertFalse(jsonResponse.getBody().getObject().getJSONObject("headers").has("X-Custom-Header"));
 	}
-	
+
 	@Test
 	public void testSetTimeouts() throws UnknownHostException, IOException {
 		String address = "http://" + findAvailableIpAddress() + "/";
@@ -436,33 +444,33 @@ public class UnirestTest {
 			}
 		}
 	}
-	
+
 	@Test
 	public void testPathParameters() throws UnirestException {
 		HttpResponse<JsonNode> jsonResponse = Unirest.get("http://httpbin.org/{method}").routeParam("method", "get").queryString("name", "Mark").asJson();
-		
+
 		assertEquals(200, jsonResponse.getStatus());
 		assertEquals(jsonResponse.getBody().getObject().getJSONObject("args").getString("name"), "Mark");
 	}
-	
+
 	@Test
 	public void testQueryAndBodyParameters() throws UnirestException {
 		HttpResponse<JsonNode> jsonResponse = Unirest.post("http://httpbin.org/{method}").routeParam("method", "post").queryString("name", "Mark").field("wot", "wat").asJson();
-		
+
 		assertEquals(200, jsonResponse.getStatus());
 		assertEquals(jsonResponse.getBody().getObject().getJSONObject("args").getString("name"), "Mark");
 		assertEquals(jsonResponse.getBody().getObject().getJSONObject("form").getString("wot"), "wat");
 	}
-	
+
 	@Test
 	public void testPathParameters2() throws UnirestException {
 		HttpResponse<JsonNode> jsonResponse = Unirest.patch("http://httpbin.org/{method}").routeParam("method", "patch").field("name", "Mark").asJson();
-		
+
 		assertEquals(200, jsonResponse.getStatus());
 		assertEquals("OK", jsonResponse.getStatusText());
 		assertEquals(jsonResponse.getBody().getObject().getJSONObject("form").getString("name"), "Mark");
 	}
-	
+
 	@Test
 	public void testMissingPathParameter() throws UnirestException {
 		try {
@@ -472,20 +480,20 @@ public class UnirestTest {
 			// OK
 		}
 	}
-	
+
 	@Test
 	public void parallelTest() throws InterruptedException {
 		Unirest.setConcurrency(10, 5);
-		
+
 		long start = System.currentTimeMillis();
 		makeParallelRequests();
 		long smallerConcurrencyTime = (System.currentTimeMillis() - start);
-		
+
 		Unirest.setConcurrency(200, 20);
 		start = System.currentTimeMillis();
 		makeParallelRequests();
 		long higherConcurrencyTime = (System.currentTimeMillis() - start);
-		
+
 		assertTrue(higherConcurrencyTime < smallerConcurrencyTime);
 	}
 
@@ -503,11 +511,11 @@ public class UnirestTest {
 				}
 			});
 		}
-		
+
 		newFixedThreadPool.shutdown();
 		newFixedThreadPool.awaitTermination(10, TimeUnit.MINUTES);
 	}
-	
+
 	@Test
 	public void testAsyncCustomContentType() throws InterruptedException {
 		Unirest.post("http://httpbin.org/post")
@@ -515,29 +523,29 @@ public class UnirestTest {
 		 .header("Content-Type", "application/json")
 		 .body("{\"hello\":\"world\"}")
 		 .asJsonAsync(new Callback<JsonNode>() {
-			
+
 			public void failed(UnirestException e) {
 				fail();
 			}
-			
+
 			public void completed(HttpResponse<JsonNode> jsonResponse) {
 				JsonNode json = jsonResponse.getBody();
 				assertEquals("{\"hello\":\"world\"}", json.getObject().getString("data"));
 				assertEquals("application/json", json.getObject().getJSONObject("headers").getString("Content-Type"));
-				
+
 				status = true;
 				lock.countDown();
 			}
-			
+
 			public void cancelled() {
 				fail();
 			}
 		});
-		
+
 		lock.await(10, TimeUnit.SECONDS);
 		assertTrue(status);
 	}
-	
+
 	@Test
 	public void testAsyncCustomContentTypeAndFormParams() throws InterruptedException {
 		Unirest.post("http://httpbin.org/post")
@@ -546,88 +554,88 @@ public class UnirestTest {
 		 .field("name", "Mark")
 		 .field("hello", "world")
 		 .asJsonAsync(new Callback<JsonNode>() {
-			
+
 			public void failed(UnirestException e) {
 				fail();
 			}
-			
+
 			public void completed(HttpResponse<JsonNode> jsonResponse) {
 				JsonNode json = jsonResponse.getBody();
 				assertEquals("Mark", json.getObject().getJSONObject("form").getString("name"));
 				assertEquals("world", json.getObject().getJSONObject("form").getString("hello"));
-				
+
 				assertEquals("application/x-www-form-urlencoded", json.getObject().getJSONObject("headers").getString("Content-Type"));
-				
+
 				status = true;
 				lock.countDown();
 			}
-			
+
 			public void cancelled() {
 				fail();
 			}
 		});
-		
+
 		lock.await(10, TimeUnit.SECONDS);
 		assertTrue(status);
 	}
-	
+
 	@Test
-	public void testGetQuerystringArray() throws JSONException, UnirestException { 
+	public void testGetQuerystringArray() throws JSONException, UnirestException {
 		HttpResponse<JsonNode> response = Unirest.get("http://httpbin.org/get").queryString("name","Mark").queryString("name", "Tom").asJson();
-		
+
 		JSONArray names = response.getBody().getObject().getJSONObject("args").getJSONArray("name");
 		assertEquals(2, names.length());
-		
+
 		assertEquals("Mark", names.getString(0));
 		assertEquals("Tom", names.getString(1));
 	}
-	
+
 	@Test
-	public void testPostMultipleFiles() throws JSONException, UnirestException, URISyntaxException { 
+	public void testPostMultipleFiles() throws JSONException, UnirestException, URISyntaxException {
 		HttpResponse<JsonNode> response = Unirest.post("http://httpbin.org/post")
 				.field("param3","wot")
 				.field("file1", new File(getClass().getResource("/test").toURI())).field("file2", new File(getClass().getResource("/test").toURI())).asJson();
-		
+
 		JSONObject names = response.getBody().getObject().getJSONObject("files");
 		assertEquals(2, names.length());
-		
+
 		assertEquals("This is a test file", names.getString("file1"));
 		assertEquals("This is a test file", names.getString("file2"));
-		
+
 		assertEquals("wot", response.getBody().getObject().getJSONObject("form").getString("param3"));
 	}
-	
+
 	@Test
-	public void testGetArray() throws JSONException, UnirestException { 
+	public void testGetArray() throws JSONException, UnirestException {
 		HttpResponse<JsonNode> response = Unirest.get("http://httpbin.org/get").queryString("name", Arrays.asList("Mark", "Tom")).asJson();
-		
+
 		JSONArray names = response.getBody().getObject().getJSONObject("args").getJSONArray("name");
 		assertEquals(2, names.length());
-		
+
 		assertEquals("Mark", names.getString(0));
 		assertEquals("Tom", names.getString(1));
 	}
-	
+
 	@Test
-	public void testPostArray() throws JSONException, UnirestException { 
+	public void testPostArray() throws JSONException, UnirestException {
 		HttpResponse<JsonNode> response = Unirest.post("http://httpbin.org/post").field("name","Mark").field("name", "Tom").asJson();
-		
+
 		JSONArray names = response.getBody().getObject().getJSONObject("form").getJSONArray("name");
 		assertEquals(2, names.length());
-		
+
 		assertEquals("Mark", names.getString(0));
 		assertEquals("Tom", names.getString(1));
 	}
-	
+
 	@Test
-	public void testPostCollection() throws JSONException, UnirestException { 
+	public void testPostCollection() throws JSONException, UnirestException {
 		HttpResponse<JsonNode> response = Unirest.post("http://httpbin.org/post").field("name", Arrays.asList("Mark", "Tom")).asJson();
-		
+
 		JSONArray names = response.getBody().getObject().getJSONObject("form").getJSONArray("name");
 		assertEquals(2, names.length());
-		
+
 		assertEquals("Mark", names.getString(0));
 		assertEquals("Tom", names.getString(1));
 	}
-	
+
 }
