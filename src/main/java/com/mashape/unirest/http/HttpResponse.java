@@ -50,7 +50,7 @@ public class HttpResponse<T> {
 	@SuppressWarnings("unchecked")
 	public HttpResponse(org.apache.http.HttpResponse response, Class<T> responseClass) {
 		HttpEntity responseEntity = response.getEntity();
-		
+
 		Header[] allHeaders = response.getAllHeaders();
 		for(Header header : allHeaders) {
 			String headerName = header.getName().toLowerCase();
@@ -62,10 +62,10 @@ public class HttpResponse<T> {
 		StatusLine statusLine = response.getStatusLine();
 		this.statusCode = statusLine.getStatusCode();
 		this.statusText = statusLine.getReasonPhrase();
-		
+
 		if (responseEntity != null) {
 			String charset = "UTF-8";
-			
+
 			Header contentType = responseEntity.getContentType();
 			if (contentType != null) {
 				String responseCharset = ResponseUtils.getCharsetFromContentType(contentType.getValue());
@@ -73,12 +73,13 @@ public class HttpResponse<T> {
 					charset = responseCharset;
 				}
 			}
-		
+
 			try {
 				byte[] rawBody;
+				Long contentLength = responseEntity.getContentLength();
 				try {
 					InputStream responseInputStream = responseEntity.getContent();
-					if (ResponseUtils.isGzipped(responseEntity.getContentEncoding())) {
+					if (ResponseUtils.isGzipped(responseEntity.getContentEncoding()) && contentLength > 0) {
 						responseInputStream = new GZIPInputStream(responseEntity.getContent());
 					}
 					rawBody = ResponseUtils.getBytes(responseInputStream);
@@ -102,7 +103,7 @@ public class HttpResponse<T> {
 				throw new RuntimeException(e);
 			}
 		}
-		
+
 		try {
 			EntityUtils.consume(responseEntity);
 		} catch (IOException e) {
@@ -113,7 +114,7 @@ public class HttpResponse<T> {
 	public int getStatus() {
 		return statusCode;
 	}
-	
+
 	public String getStatusText() {
 		return statusText;
 	}
