@@ -153,7 +153,8 @@ public class MultipartBody extends BaseRequest implements Body {
 	public HttpEntity getEntity() {
 		if (hasFile) {
 			MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-			if (mode != null) { builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE); }
+			if (mode == null) { builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE); }
+			else { builder.setMode(mode); }
 			Set<String> visitedKeys = new HashSet<String>();
 			for(String key: keyOrder) {
 				if (visitedKeys.contains(key)) { continue; }
