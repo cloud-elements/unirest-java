@@ -135,7 +135,7 @@ public class HttpClientHelper {
 		HttpClient client = ClientFactory.getHttpClient(); // The
 															// DefaultHttpClient
 															// is thread-safe
-		
+
 		org.apache.http.HttpResponse response;
 		try {
 			response = client.execute(requestObj);
@@ -172,8 +172,8 @@ public class HttpClientHelper {
 		String urlToRequest = null;
 		try {
 			URL url = new URL(request.getUrl());
-			URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), URLDecoder.decode(url.getPath(), "UTF-8"), "", url.getRef());
-			urlToRequest = uri.toURL().toString();
+			URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), "", url.getRef());
+			urlToRequest = uri.toASCIIString();
 			if (url.getQuery() != null && !url.getQuery().trim().equals("")) {
 				if (!urlToRequest.substring(urlToRequest.length() - 1).equals("?")) {
 					urlToRequest += "?";
@@ -185,7 +185,7 @@ public class HttpClientHelper {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		
+
 		switch (request.getHttpMethod()) {
 		case GET:
 			reqObj = new HttpGet(urlToRequest);
@@ -209,7 +209,7 @@ public class HttpClientHelper {
 			reqObj = new HttpHead(urlToRequest);
 			break;
 		}
-		
+
 		Set<Entry<String, List<String>>> entrySet = request.getHeaders().entrySet();
 		for(Entry<String, List<String>> entry : entrySet) {
 			List<String> values = entry.getValue();
