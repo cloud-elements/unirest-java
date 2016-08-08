@@ -21,7 +21,7 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 
 package com.mashape.unirest.request;
 
@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,7 +46,7 @@ public class HttpRequest extends BaseRequest {
 
 	private HttpMethod httpMethod;
 	protected String url;
-	private Map<String, List<String>> headers = new HashMap<String, List<String>>();
+	Map<String, List<String>> headers = new TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER);
 	protected Body body;
 
 	public HttpRequest(HttpMethod method, String url) {
@@ -57,7 +58,7 @@ public class HttpRequest extends BaseRequest {
 	public HttpRequest routeParam(String name, String value) {
 		Matcher matcher = Pattern.compile("\\{" + name + "\\}").matcher(url);
 		int count = 0;
-		while(matcher.find()) {
+		while (matcher.find()) {
 			count++;
 		}
 		if (count == 0) {
@@ -68,7 +69,7 @@ public class HttpRequest extends BaseRequest {
 	}
 
 	public HttpRequest basicAuth(String username, String password) {
-		header("Authorization", "Basic " + Base64Coder.encodeString(username+ ":" + password));
+		header("Authorization", "Basic " + Base64Coder.encodeString(username + ":" + password));
 		return this;
 	}
 
@@ -84,7 +85,7 @@ public class HttpRequest extends BaseRequest {
 
 	public HttpRequest headers(Map<String, String> headers) {
 		if (headers != null) {
-			for(Map.Entry<String, String> entry : headers.entrySet()) {
+			for (Map.Entry<String, String> entry : headers.entrySet()) {
 				header(entry.getKey(), entry.getValue());
 			}
 		}
@@ -92,21 +93,24 @@ public class HttpRequest extends BaseRequest {
 	}
 
 	public HttpRequest queryString(String name, Collection<?> value) {
-		for(Object cur : value) {
+		for (Object cur : value) {
 			queryString(name, cur);
 		}
 		return this;
 	}
 
 	public HttpRequest queryString(String name, Object value) {
-		StringBuilder queryString  = new StringBuilder();
+		StringBuilder queryString = new StringBuilder();
 		if (this.url.contains("?")) {
 			queryString.append("&");
 		} else {
 			queryString.append("?");
 		}
 		try {
-			queryString.append(name).append("=").append(URLEncoder.encode((value == null) ? "" : value.toString(), "UTF-8"));
+			queryString
+				.append(URLEncoder.encode(name))
+				.append("=")
+				.append(URLEncoder.encode((value == null) ? "" : value.toString(), "UTF-8"));
 		} catch (UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}
@@ -116,7 +120,7 @@ public class HttpRequest extends BaseRequest {
 
 	public HttpRequest queryString(Map<String, Object> parameters) {
 		if (parameters != null) {
-			for(Entry<String, Object> param : parameters.entrySet()) {
+			for (Entry<String, Object> param : parameters.entrySet()) {
 				if (param.getValue() instanceof String || param.getValue() instanceof Number || param.getValue() instanceof Boolean) {
 					queryString(param.getKey(), param.getValue());
 				} else if (param.getValue() instanceof Collection) {
@@ -138,7 +142,8 @@ public class HttpRequest extends BaseRequest {
 	}
 
 	public Map<String, List<String>> getHeaders() {
-		if (headers == null) return new HashMap<String, List<String>>();
+		if (headers == null)
+			return new HashMap<String, List<String>>();
 		return headers;
 	}
 
