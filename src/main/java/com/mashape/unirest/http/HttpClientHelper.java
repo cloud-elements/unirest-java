@@ -68,8 +68,7 @@ public class HttpClientHelper {
 	private static final String USER_AGENT_HEADER = "user-agent";
 	private static final String USER_AGENT = "unirest-java/1.3.11";
 
-	private static <T> FutureCallback<org.apache.http.HttpResponse> prepareCallback(final Class<T> responseClass,
-			final Callback<T> callback) {
+	private static <T> FutureCallback<org.apache.http.HttpResponse> prepareCallback(final Class<T> responseClass, final Callback<T> callback) {
 		if (callback == null)
 			return null;
 
@@ -100,8 +99,7 @@ public class HttpClientHelper {
 			asyncIdleConnectionMonitorThread.start();
 		}
 
-		final Future<org.apache.http.HttpResponse> future = asyncHttpClient.execute(requestObj,
-				prepareCallback(responseClass, callback));
+		final Future<org.apache.http.HttpResponse> future = asyncHttpClient.execute(requestObj, prepareCallback(responseClass, callback));
 
 		return new Future<HttpResponse<T>>() {
 
@@ -122,8 +120,7 @@ public class HttpClientHelper {
 				return new HttpResponse<T>(httpResponse, responseClass);
 			}
 
-			public HttpResponse<T> get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException,
-					TimeoutException {
+			public HttpResponse<T> get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
 				org.apache.http.HttpResponse httpResponse = future.get(timeout, unit);
 				return new HttpResponse<T>(httpResponse, responseClass);
 			}
@@ -211,10 +208,10 @@ public class HttpClientHelper {
 		}
 
 		Set<Entry<String, List<String>>> entrySet = request.getHeaders().entrySet();
-		for(Entry<String, List<String>> entry : entrySet) {
+		for (Entry<String, List<String>> entry : entrySet) {
 			List<String> values = entry.getValue();
 			if (values != null) {
-				for(String value : values) {
+				for (String value : values) {
 					reqObj.addHeader(entry.getKey(), value);
 				}
 			}

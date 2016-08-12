@@ -1,10 +1,9 @@
 # Unirest for Java [![Build Status][travis-image]][travis-url]
 
-[![License][license-image]][license-url]
-[![version][maven-version]][maven-url]
-[![Gitter][gitter-image]][gitter-url]
+![][unirest-logo]
 
-Unirest is a set of lightweight HTTP libraries available in [multiple languages](http://unirest.io).
+
+[Unirest](http://unirest.io) is a set of lightweight HTTP libraries available in multiple languages, built and maintained by [Mashape](https://github.com/Mashape), who also maintain the open-source API Gateway [Kong](https://github.com/Mashape/kong). 
 
 Do yourself a favor, and start making HTTP requests like this:
 
@@ -14,6 +13,11 @@ Unirest.post("http://httpbin.org/post")
   .field("last", "Polo")
   .asJson()
 ```
+
+[![License][license-image]][license-url]  |
+[![version][maven-version]][maven-url]  |
+[![Gitter][gitter-image]][gitter-url]
+
 
 ## Features
 
@@ -27,6 +31,7 @@ Unirest.post("http://httpbin.org/post")
 * Customizable default headers for every request (DRY)
 * Customizable `HttpClient` and `HttpAsyncClient` implementation
 * Automatic JSON parsing into a native object for JSON responses
+* Customizable binding, with mapping from response body to java Object 
 
 ## Installing
 Is easy as pie. Kidding. It's about as easy as doing these little steps:
@@ -39,7 +44,7 @@ You can use Maven by including the library:
 <dependency>
     <groupId>com.mashape.unirest</groupId>
     <artifactId>unirest-java</artifactId>
-    <version>1.4.4</version>
+    <version>1.4.9</version>
 </dependency>
 ```
 
@@ -77,11 +82,17 @@ If you would like to run tests, also add the following dependency along with the
   <version>4.11</version>
   <scope>test</scope>
 </dependency>
+<dependency>
+  <groupId>commons-io</groupId>
+  <artifactId>commons-io</artifactId>
+  <version>2.4</version>
+  <scope>test</scope>
+</dependency>
 ```
 
 ### Without Maven
 
-Alternatively if you don't use Maven, you can directly include the JAR file in the classpath: http://oss.sonatype.org/content/repositories/releases/com/mashape/unirest/unirest-java/1.4.4/unirest-java-1.4.4.jar
+Alternatively if you don't use Maven, you can directly include the JAR file in the classpath: http://oss.sonatype.org/content/repositories/releases/com/mashape/unirest/unirest-java/1.4.9/unirest-java-1.4.9.jar
 
 Don't forget to also install the dependencies ([`org.json`](http://www.json.org/java/), [`httpclient 4.3.6`](http://hc.apache.org/downloads.cgi), [`httpmime 4.3.6`](http://hc.apache.org/downloads.cgi), [`httpasyncclient 4.0.2`](http://hc.apache.org/downloads.cgi)) in the classpath too.
 
@@ -99,9 +110,60 @@ HttpResponse<JsonNode> jsonResponse = Unirest.post("http://httpbin.org/post")
   .asJson();
 ```
 
-Requests are made when `as[Type]()` is invoked, possible types include `Json`, `Binary`, `String`. If the request supports and it is of type `HttpRequestWithBody`, a body it can be passed along with `.body(String|JsonNode)`. If you already have a map of parameters or do not wish to use seperate field methods for each one there is a `.fields(Map<String, Object> fields)` method that will serialize each key - value to form parameters on your request.
+Requests are made when `as[Type]()` is invoked, possible types include `Json`, `Binary`, `String`, `Object`.
+
+If the request supports and it is of type `HttpRequestWithBody`, a body it can be passed along with `.body(String|JsonNode|Object)`. For using `.body(Object)` some pre-configuration is needed (see below).
+
+If you already have a map of parameters or do not wish to use seperate field methods for each one there is a `.fields(Map<String, Object> fields)` method that will serialize each key - value to form parameters on your request.
 
 `.headers(Map<String, String> headers)` is also supported in replacement of multiple header methods.
+
+## Serialization
+Before an `asObject(Class)` or a `.body(Object)` invokation, is necessary to provide a custom implementation of the `ObjectMapper` interface.
+This should be done only the first time, as the instance of the ObjectMapper will be shared globally.
+
+For example, serializing Json from\to Object using the popular Jackson ObjectMapper takes only few lines of code.
+
+```java
+// Only one time
+Unirest.setObjectMapper(new ObjectMapper() {
+    private com.fasterxml.jackson.databind.ObjectMapper jacksonObjectMapper
+                = new com.fasterxml.jackson.databind.ObjectMapper();
+    
+    public <T> T readValue(String value, Class<T> valueType) {
+        try {
+            return jacksonObjectMapper.readValue(value, valueType);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String writeValue(Object value) {
+        try {
+            return jacksonObjectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+});
+
+// Response to Object
+HttpResponse<Book> bookResponse = Unirest.get("http://httpbin.org/books/1").asObject(Book.class);
+Book bookObject = bookResponse.getBody();
+
+HttpResponse<Author> authorResponse = Unirest.get("http://httpbin.org/books/{id}/author")
+    .routeParam("id", bookObject.getId())
+    .asObject(Author.class);
+    
+Author authorObject = authorResponse.getBody();
+
+// Object to Json
+HttpResponse<JsonNode> postResponse = Unirest.post("http://httpbin.org/authors/post")
+        .header("accept", "application/json")
+        .header("Content-Type", "application/json")
+        .body(authorObject)
+        .asJson();
+```
 
 ### Route Parameters
 
@@ -146,7 +208,7 @@ Future<HttpResponse<JsonNode>> future = Unirest.post("http://httpbin.org/post")
 ```
 
 ## File Uploads
-Creating `multipart` requests with Java is trivial, simply pass along a `File` Object as a field:
+Creating `multipart` requests with Java is trivial, simply pass along a `File` or an InputStream Object as a field:
 
 ```java
 HttpResponse<JsonNode> jsonResponse = Unirest.post("http://httpbin.org/post")
@@ -162,6 +224,28 @@ HttpResponse<JsonNode> jsonResponse = Unirest.post("http://httpbin.org/post")
 HttpResponse<JsonNode> jsonResponse = Unirest.post("http://httpbin.org/post")
   .header("accept", "application/json")
   .body("{\"parameter\":\"value\", \"foo\":\"bar\"}")
+  .asJson();
+```
+
+## Byte Stream as Entity Body
+
+```java
+final InputStream stream = new FileInputStream(new File(getClass().getResource("/image.jpg").toURI()));
+final byte[] bytes = new byte[stream.available()];
+stream.read(bytes);
+stream.close();
+final HttpResponse<JsonNode> jsonResponse = Unirest.post("http://httpbin.org/post")
+  .field("name", "Mark")
+  .field("file", bytes, "image.jpg")
+  .asJson();
+```
+
+## InputStream as Entity Body
+
+```java
+HttpResponse<JsonNode> jsonResponse = Unirest.post("http://httpbin.org/post")
+  .field("name", "Mark")
+  .field("file", new FileInputStream(new File(getClass().getResource("/image.jpg").toURI())), ContentType.APPLICATION_OCTET_STREAM, "image.jpg")
   .asJson();
 ```
 
@@ -190,7 +274,7 @@ HttpRequestWithBody request = Unirest.delete(String url);
 Upon recieving a response Unirest returns the result in the form of an Object, this object should always have the same keys for each language regarding to the response details.
 
 - `.getStatus()` - HTTP Response Status Code (Example: 200)
-- `.getStatusTest()` - HTTP Response Status Text (Example: "OK")
+- `.getStatusText()` - HTTP Response Status Text (Example: "OK")
 - `.getHeaders()` - HTTP Response Headers
 - `.getBody()` - Parsed response body where applicable, for example JSON responses are parsed to Objects / Associative Arrays.
 - `.getRawBody()` - Un-parsed response body
@@ -261,6 +345,9 @@ Unirest.shutdown();
 ----
 
 Made with &#9829; from the [Mashape](https://www.mashape.com/) team
+
+[unirest-logo]: http://cl.ly/image/2P373Y090s2O/Image%202015-10-12%20at%209.48.06%20PM.png
+
 
 [license-url]: https://github.com/Mashape/unirest-java/blob/master/LICENSE
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat
