@@ -25,6 +25,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package com.mashape.unirest.http;
 
+import com.mashape.unirest.http.exceptions.UnirestException;
 import com.mashape.unirest.http.options.Option;
 import com.mashape.unirest.http.options.Options;
 import com.mashape.unirest.http.utils.ResponseUtils;
@@ -80,12 +81,17 @@ public class HttpResponse<T> {
 			try {
 				byte[] rawBody;
 				Long contentLength = responseEntity.getContentLength();
+
+				if (!ResponseUtils.isMultipartContentType(contentType)) {
+					ResponseUtils.checkResponseSize(contentLength);
+				}
+
 				try {
 					InputStream responseInputStream = responseEntity.getContent();
 					if (ResponseUtils.isGzipped(responseEntity.getContentEncoding()) && contentLength > 0) {
 						responseInputStream = new GZIPInputStream(responseEntity.getContent());
 					}
-					rawBody = ResponseUtils.getBytes(responseInputStream);
+					rawBody = ResponseUtils.getBytes(responseInputStream, !ResponseUtils.isMultipartContentType(contentType));
 				} catch (IOException e2) {
 					throw new RuntimeException(e2);
 				}

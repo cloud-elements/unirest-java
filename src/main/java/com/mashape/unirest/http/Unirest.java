@@ -109,6 +109,19 @@ public class Unirest {
 	}
 
 	/**
+		* Set the max response size.
+		*
+		* @param maxTotal Defines the maximum response size for non-multipart responses. (Multipart responses, which include
+		*                 file downloads, will have no size limit).
+		*/
+	public static void setMaxResponseSize(long maxResponseSize) {
+		Options.setOption(Option.MAX_RESPONSE_SIZE, maxResponseSize);
+
+		// Reload the client implementations
+		Options.refresh();
+	}
+
+	/**
 	 * Clear default headers
 	 */
 	public static void clearDefaultHeaders() {
