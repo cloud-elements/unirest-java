@@ -64,6 +64,7 @@ public class UnirestTest {
 	public void setUp() {
 		lock = new CountDownLatch(1);
 		status = false;
+		Options.setOption(Option.MAX_RESPONSE_SIZE, -1);
 	}
 
 	private String findAvailableIpAddress() throws UnknownHostException, IOException {
