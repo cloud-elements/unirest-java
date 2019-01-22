@@ -28,6 +28,7 @@ package com.mashape.unirest.test.http;
 import com.mashape.unirest.http.*;
 import com.mashape.unirest.http.async.Callback;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import com.mashape.unirest.http.options.Option;
 import com.mashape.unirest.http.options.Options;
 import com.mashape.unirest.request.GetRequest;
 import com.mashape.unirest.request.HttpRequest;
@@ -63,6 +64,7 @@ public class UnirestTest {
 	public void setUp() {
 		lock = new CountDownLatch(1);
 		status = false;
+		Options.setOption(Option.MAX_RESPONSE_SIZE, -1);
 	}
 
 	private String findAvailableIpAddress() throws UnknownHostException, IOException {
@@ -814,5 +816,19 @@ public class UnirestTest {
 		assertEquals("Only header \"Content-Type\" should exist", null, headers.getFirst("cOnTeNt-TyPe"));
 		assertEquals("Only header \"Content-Type\" should exist", null, headers.getFirst("content-type"));
 		assertEquals("Only header \"Content-Type\" should exist", "application/json", headers.getFirst("Content-Type"));
+	}
+
+	@Test(expected = UnirestException.class)
+	public void testGetLargeResponse() throws JSONException, UnirestException {
+		Options.setOption(Option.MAX_RESPONSE_SIZE, 3);
+		HttpResponse<String> response = Unirest.get("http://httpbin.org/get?name=mark").asString();
+		response.getBody();
+	}
+
+	@Test
+	public void testGetLargeResponseOk() throws JSONException, UnirestException {
+		Options.setOption(Option.MAX_RESPONSE_SIZE, 3000);
+		HttpResponse<String> response = Unirest.get("http://httpbin.org/get?name=mark").asString();
+		response.getBody();
 	}
 }

@@ -4,7 +4,7 @@
 	<groupId>com.mashape.unirest</groupId>
 	<artifactId>unirest-java</artifactId>
 	<packaging>jar</packaging>
-	<version>1.4.10-CE-SNAPSHOT</version>
+	<version>1.4.10-CE-0.2-SNAPSHOT</version>
 	<name>unirest-java</name>
 	<description>Simplified, lightweight HTTP client library</description>
 	<url>http://unirest.io/</url>
@@ -45,6 +45,15 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<jackson.version>2.6.0</jackson.version>
 	</properties>
+
+	<distributionManagement>
+		<repository>
+			<id>cloud-elements</id>
+			<name>Cloud Elements Maven 2 Repository</name>
+			<url>sftp://cm-adm.us-west-2.c-e.site/var/opt/nginx/repo</url>
+			<layout>default</layout>
+		</repository>
+	</distributionManagement>
 
 	<build>
 		<plugins>
@@ -88,6 +97,11 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>2.9.1</version>
+        <configuration>
+          <additionalparam>-Xdoclint:none</additionalparam>
+          <additionalOptions>-Xdoclint:none</additionalOptions>
+          <additionalJOption>-Xdoclint:none</additionalJOption>
+        </configuration>
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>
@@ -98,6 +112,14 @@
 				</executions>
 			</plugin>
 		</plugins>
+
+    <extensions>
+      <extension>
+        <groupId>org.apache.maven.wagon</groupId>
+        <artifactId>wagon-ssh</artifactId>
+        <version>3.0.0</version>
+      </extension>
+    </extensions>
 	</build>
 
 	<dependencies>
