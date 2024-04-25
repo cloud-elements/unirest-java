@@ -50,6 +50,8 @@ import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -101,6 +103,14 @@ public class UnirestTest {
 		assertEquals(response.getBody().getObject().getJSONObject("args").getString("name"), "mark");
 
 		response = Unirest.get("http://httpbin.org/get").queryString("name", "mark2").asJson();
+		assertEquals(response.getBody().getObject().getJSONObject("args").getString("name"), "mark2");
+
+		Map<String, Object> queryParams = new HashMap<>();
+		queryParams.put("param1", null);
+		queryParams.put("name", "mark2");
+		response = Unirest.get("http://httpbin.org/get").queryString(queryParams).asJson();
+
+		// assert that null query param is ignored and rest of the query params are sent
 		assertEquals(response.getBody().getObject().getJSONObject("args").getString("name"), "mark2");
 	}
 

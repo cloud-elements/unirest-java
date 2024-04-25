@@ -121,6 +121,10 @@ public class HttpRequest extends BaseRequest {
 	public HttpRequest queryString(Map<String, Object> parameters) {
 		if (parameters != null) {
 			for (Entry<String, Object> param : parameters.entrySet()) {
+				// ignore the parameters which have null values
+				if (param.getValue() == null){
+					continue;
+				}
 				if (param.getValue() instanceof String || param.getValue() instanceof Number || param.getValue() instanceof Boolean) {
 					queryString(param.getKey(), param.getValue());
 				} else if (param.getValue() instanceof Collection) {
