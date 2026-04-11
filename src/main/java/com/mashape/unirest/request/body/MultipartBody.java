@@ -150,8 +150,11 @@ public class MultipartBody extends BaseRequest implements Body {
 		if (hasFile) {
 			MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 			if (mode != null) {
+				builder.setMode(mode);
+			} else {
 				builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
 			}
+			builder.setCharset(java.nio.charset.StandardCharsets.UTF_8);
 			for (String key : parameters.keySet()) {
 				List<Object> value = parameters.get(key);
 				ContentType contentType = contentTypes.get(key);
