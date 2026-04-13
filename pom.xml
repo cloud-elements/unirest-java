@@ -4,7 +4,7 @@
 	<groupId>com.mashape.unirest</groupId>
 	<artifactId>unirest-java</artifactId>
 	<packaging>jar</packaging>
-	<version>1.4.10-CE-0.2-SNAPSHOT</version>
+	<version>1.4.10-CE-0.3</version>
 	<name>unirest-java</name>
 	<description>Simplified, lightweight HTTP client library</description>
 	<url>http://unirest.io/</url>
@@ -24,9 +24,9 @@
 	</licenses>
 
 	<scm>
-		<url>https://github.com/Mashape/unirest-java</url>
-		<connection>scm:git:git@github.com:Mashape/unirest-java.git</connection>
-		<developerConnection>scm:git:git@github.com:Mashape/unirest-java.git</developerConnection>
+		<url>https://github.com/cloud-elements/unirest-java</url>
+		<connection>scm:git:git@github.com:cloud-elements/unirest-java.git</connection>
+		<developerConnection>scm:git:git@github.com:cloud-elements/unirest-java.git</developerConnection>
 	</scm>
 
 	<developers>
@@ -48,10 +48,9 @@
 
 	<distributionManagement>
 		<repository>
-			<id>cloud-elements</id>
-			<name>Cloud Elements Maven 2 Repository</name>
-			<url>sftp://cm-adm.us-west-2.c-e.site/var/opt/nginx/repo</url>
-			<layout>default</layout>
+			<id>unirest-java-cloud-elements-github</id>
+			<name>unirest-java Github package repository</name>
+			<url>https://maven.pkg.github.com/cloud-elements/unirest-java</url>
 		</repository>
 	</distributionManagement>
 
