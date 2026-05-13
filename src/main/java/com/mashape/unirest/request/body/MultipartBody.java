@@ -152,9 +152,15 @@ public class MultipartBody extends BaseRequest implements Body {
 			if (mode != null) {
 				builder.setMode(mode);
 			} else {
-				builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+				// RFC6532 hard-codes UTF-8 for part-header bytes, which preserves
+				// non-ASCII filenames (e.g. Japanese) per RFC 5987 / 6266.
+				// Do NOT call builder.setCharset(...) — in any mode it appends an
+				// illegal `charset=` parameter to the outer
+				// `Content-Type: multipart/form-data` header, which RFC 7578 §4.6
+				// forbids and strict parsers (ServiceNow, older Tomcat) reject
+				// with HTTP 400 "File part might be missing".
+				builder.setMode(HttpMultipartMode.RFC6532);
 			}
-			builder.setCharset(java.nio.charset.StandardCharsets.UTF_8);
 			for (String key : parameters.keySet()) {
 				List<Object> value = parameters.get(key);
 				ContentType contentType = contentTypes.get(key);
